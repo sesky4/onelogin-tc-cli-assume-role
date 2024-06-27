@@ -1,16 +1,15 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>com.onelogin</groupId>
-  <artifactId>onelogin-aws-assume-role</artifactId>
-  <version>1.2.2</version>
+  <groupId>com.tencentcloudapi</groupId>
+  <artifactId>onelogin-tc-assume-role</artifactId>
+  <version>1.0.0</version>
   <packaging>pom</packaging>
-  <name>onelogin-aws-assume-role</name>
-  <description>Onelogin AWS Assume Role (Multi Account).</description>
-  <url>https://github.com/onelogin/onelogin-aws-cli-assume-role</url>
+  <name>onelogin-tc-assume-role</name>
+  <description>Onelogin TC Assume Role (Multi Account).</description>
+  <url>https://github.com/onelogin/onelogin-tc-cli-assume-role</url>
   <modules>
-    <module>onelogin-aws-assume-role-cli</module>
-    <module>onelogin-aws-assume-role-jsp</module>
+    <module>onelogin-tc-assume-role-cli</module>
   </modules>
   <distributionManagement>
     <repository>
@@ -25,24 +24,6 @@
     </snapshotRepository>
   </distributionManagement>
 
-  <scm>
-    <connection>scm:git:git@github.com:onelogin/onelogin-aws-cli-assume-role.git</connection>
-    <developerConnection>scm:git:git@github.com:onelogin/onelogin-aws-cli-assume-role.git</developerConnection>
-    <url>https://github.com/onelogin/onelogin-aws-cli-assume-role</url>
-    <tag>HEAD</tag>
-  </scm>
-  <developers>
-    <developer>
-      <name>Sixto Martín García</name>
-      <url>https://github.com/pitbulk</url>
-      <organization>OneLogin</organization>
-    </developer>
-    <developer>
-      <name>Rich Chetwynd</name>
-      <url>https://github.com/richet</url>
-      <organization>OneLogin</organization>
-    </developer>
-  </developers>
   <licenses>
     <license>
       <name>MIT License</name>
