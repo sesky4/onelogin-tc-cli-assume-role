@@ -326,24 +326,24 @@ public class OneloginTCCLI {
                     } else {
                         String selectedRole = "";
                         List<String> roleDataList = attributes.get("https://cloud.tencent.com/SAML/Attributes/Role");
-                        List<String> roleData = null;
-                        if (tcAccountId != null) {
-                            roleData = new ArrayList();
-                            for (int j = 0; j < roleDataList.size(); j++) {
-                                String[] roleInfo = roleDataList.get(j).split(":");
-                                String accountId = roleInfo[4];
-                                if (accountId.equals(tcAccountId)) {
-                                    roleData.add(roleDataList.get(j));
-                                }
+                        List<String> roleData = new ArrayList<String>();
+
+                        for (int j = 0; j < roleDataList.size(); j++) {
+                            String[] roles = roleDataList.get(j).split("[,;]");
+                            for (int k = 0; k < roles.length; k++) {
+                                String role = roles[k];
+                                if(tcAccountId != null && !role.split(":")[4].equals("uin/"+tcAccountId))
+                                    continue;
+                                if(!role.split(":")[5].startsWith("roleName"))
+                                    continue;
+                                roleData.add(roles[k]);
                             }
-                        } else {
-                            roleData = new ArrayList(roleDataList);
                         }
 
                         if (roleData.size() == 1 && !roleData.get(0).isEmpty()) {
                             String[] roleInfo = roleData.get(0).split(":");
-                            String accountId = roleInfo[4];
-                            String roleName = roleInfo[5].replace("role/", "");
+                            String accountId = roleInfo[4].replace("uin/", "");
+                            String roleName = roleInfo[5].replace("roleName/", "");
                             System.out.println("Role selected: " + roleName + " (Account " + accountId + ")");
                             selectedRole = roleData.get(0);
                         } else if (roleData.size() > 1) {
@@ -371,9 +371,9 @@ public class OneloginTCCLI {
                             Map<String, Map<String, Integer>> rolesByApp = new HashMap<String, Map<String, Integer>>();
                             Map<String, Integer> val = null;
                             for (int j = 0; j < roleData.size(); j++) {
-                                String[] roleInfo = roleData.get(j).split(",")[0].split(":");
-                                String accountId = roleInfo[4];
-                                String roleName = roleInfo[5].replace("role/", "");
+                                String[] roleInfo = roleData.get(j).split(":");
+                                String accountId = roleInfo[4].replace("uin/", "");
+                                String roleName = roleInfo[5].replace("roleName/", "");
                                 System.out.println(" " + j + " | " + roleName + " (Account " + accountId + ")");
                                 if (rolesByApp.containsKey(accountId)) {
                                     rolesByApp.get(accountId).put(roleName, j);
