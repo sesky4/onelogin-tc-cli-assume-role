@@ -19,6 +19,7 @@ import com.tencentcloudapi.sts.v20180813.models.Credentials;
 import org.apache.commons.cli.*;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.util.*;
@@ -30,7 +31,6 @@ public class OneloginTCCLI {
     private static int loop = 1;
     private static String profileName = null;
     private static File file = null;
-    private static String defaultFileLocation = "~/.tccli/default.credential";
     private static String oneloginUsernameOrEmail = null;
     private static String oneloginPassword = null;
     private static String appId = null;
@@ -329,19 +329,22 @@ public class OneloginTCCLI {
                         List<String> roleData = new ArrayList<String>();
 
                         for (int j = 0; j < roleDataList.size(); j++) {
-                            String[] roles = roleDataList.get(j).split("[,;]");
+                            String[] rolesAndPrinciples = roleDataList.get(j).split(",");
+                            String rolesString = rolesAndPrinciples[0];
+                            String principle = rolesAndPrinciples[1];
+                            String[] roles = rolesString.split(";");
                             for (int k = 0; k < roles.length; k++) {
                                 String role = roles[k];
                                 if(tcAccountId != null && !role.split(":")[4].equals("uin/"+tcAccountId))
                                     continue;
                                 if(!role.split(":")[5].startsWith("roleName"))
                                     continue;
-                                roleData.add(roles[k]);
+                                roleData.add(roles[k]+","+principle);
                             }
                         }
 
                         if (roleData.size() == 1 && !roleData.get(0).isEmpty()) {
-                            String[] roleInfo = roleData.get(0).split(":");
+                            String[] roleInfo = roleData.get(0).split(",")[0].split(":");
                             String accountId = roleInfo[4].replace("uin/", "");
                             String roleName = roleInfo[5].replace("roleName/", "");
                             System.out.println("Role selected: " + roleName + " (Account " + accountId + ")");
@@ -371,7 +374,7 @@ public class OneloginTCCLI {
                             Map<String, Map<String, Integer>> rolesByApp = new HashMap<String, Map<String, Integer>>();
                             Map<String, Integer> val = null;
                             for (int j = 0; j < roleData.size(); j++) {
-                                String[] roleInfo = roleData.get(j).split(":");
+                                String[] roleInfo = roleData.get(j).split(",")[0].split(":");
                                 String accountId = roleInfo[4].replace("uin/", "");
                                 String roleName = roleInfo[5].replace("roleName/", "");
                                 System.out.println(" " + j + " | " + roleName + " (Account " + accountId + ")");
@@ -458,20 +461,24 @@ public class OneloginTCCLI {
                     System.out.println(action + " TENCENTCLOUD_SECRET_KEY=" + stsCredentials.getTmpSecretKey());
                     System.out.println();
                 } else {
-                    if (file == null) {
-                        file = new File(defaultFileLocation);
-                    }
                     if (profileName == null) {
                         profileName = "default";
                     }
+                    if (file == null) {
+                        String defaultFileLocation = System.getProperty("user.home") + "/.tccli/"+profileName+".credential";
+                        file = new File(defaultFileLocation);
+                    }
 
                     JsonObject configObject = new JsonObject();
-                    try (FileReader reader = new FileReader(file)) {
-                        try {
+                    try{
+                        try (FileReader reader = new FileReader(file)) {
                             configObject = JsonParser.parseReader(reader).getAsJsonObject();
-                        } catch (JsonSyntaxException e) {
                         }
+                    } catch (FileNotFoundException ignored){
+                        file.createNewFile();
+                    } catch (JsonSyntaxException ignored){
                     }
+
                     configObject.addProperty("secretId", stsCredentials.getTmpSecretId());
                     configObject.addProperty("secretKey", stsCredentials.getTmpSecretKey());
                     configObject.addProperty("token", stsCredentials.getToken());
