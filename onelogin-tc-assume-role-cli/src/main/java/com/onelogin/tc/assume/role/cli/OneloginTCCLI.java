@@ -320,12 +320,12 @@ public class OneloginTCCLI {
                     simulatedRequest = simulatedRequest.addParameter("SAMLResponse", samlResponse);
                     SamlResponse samlResponseObj = new SamlResponse(new SettingsBuilder().build(), simulatedRequest);
                     HashMap<String, List<String>> attributes = samlResponseObj.getAttributes();
-                    if (!attributes.containsKey("https://aws.amazon.com/SAML/Attributes/Role")) {
+                    if (!attributes.containsKey("https://cloud.tencent.com/SAML/Attributes/Role")) {
                         System.out.print("SAMLResponse from Identity Provider does not contain TencentCloud Role info");
                         System.exit(0);
                     } else {
                         String selectedRole = "";
-                        List<String> roleDataList = attributes.get("https://aws.amazon.com/SAML/Attributes/Role");
+                        List<String> roleDataList = attributes.get("https://cloud.tencent.com/SAML/Attributes/Role");
                         List<String> roleData = null;
                         if (tcAccountId != null) {
                             roleData = new ArrayList();
@@ -431,6 +431,8 @@ public class OneloginTCCLI {
                 assumeRoleWithSAMLRequest.setRoleArn(roleArn);
                 assumeRoleWithSAMLRequest.setSAMLAssertion(samlResponse);
                 assumeRoleWithSAMLRequest.setDurationSeconds((long) currentDuration);
+                String randSessionName = "tencentcloud-onelogin-" + Math.random();
+                assumeRoleWithSAMLRequest.setRoleSessionName(randSessionName);
                 AssumeRoleWithSAMLResponse assumeRoleWithSAMLResult = null;
                 assumeRoleWithSAMLResult = stsClient.AssumeRoleWithSAML(assumeRoleWithSAMLRequest);
 
