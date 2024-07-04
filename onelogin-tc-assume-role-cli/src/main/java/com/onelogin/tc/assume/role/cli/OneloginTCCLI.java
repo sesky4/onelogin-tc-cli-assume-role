@@ -1,9 +1,7 @@
 package com.onelogin.tc.assume.role.cli;
 
-import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
-import com.google.gson.JsonSyntaxException;
 import com.onelogin.saml2.authn.SamlResponse;
 import com.onelogin.saml2.http.HttpRequest;
 import com.onelogin.saml2.settings.SettingsBuilder;
@@ -19,9 +17,9 @@ import com.tencentcloudapi.sts.v20180813.models.Credentials;
 import org.apache.commons.cli.*;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.FileWriter;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -30,7 +28,6 @@ public class OneloginTCCLI {
     private static int time = 45;
     private static int loop = 1;
     private static String profileName = null;
-    private static File file = null;
     private static String oneloginUsernameOrEmail = null;
     private static String oneloginPassword = null;
     private static String appId = null;
@@ -85,12 +82,6 @@ public class OneloginTCCLI {
                     profileName = value;
                 } else {
                     profileName = "default";
-                }
-            }
-            if (commandLine.hasOption("file")) {
-                value = commandLine.getOptionValue("file");
-                if (value != null && !value.isEmpty()) {
-                    file = new File(value);
                 }
             }
 
@@ -220,16 +211,15 @@ public class OneloginTCCLI {
         options.addOption("h", "help", false, "Show the help guide");
         options.addOption("t", "time", true, "Sleep time between iterations, in minutes  [15-60 min]");
         options.addOption("l", "loop", true, "Number of iterations");
-        options.addOption("p", "profile", true, "Save temporary TC credentials using that profile name");
-        options.addOption("f", "file", true, "Set a custom path to save the TC credentials. (if not used, default TC path is used)");
-        options.addOption("r", "region", true, "Set the TC region.");
-        options.addOption("a", "appid", true, "Set TC App ID.");
+        options.addOption("p", "profile", true, "Save temporary TencentCloud credentials using that profile name");
+        options.addOption("r", "region", true, "Set the TencentCloud region.");
+        options.addOption("a", "appid", true, "Set TencentCloud App ID.");
         options.addOption("d", "subdomain", true, "OneLogin Instance Sub Domain.");
         options.addOption("u", "username", true, "OneLogin username.");
         options.addOption(null, "password", true, "OneLogin password.");
-        options.addOption(null, "tc-account-id", true, "TC Account ID.");
-        options.addOption(null, "tc-role-name", true, "TC Role Name.");
-        options.addOption("z", "duration", true, "Desired TC Credential Duration");
+        options.addOption(null, "tc-account-id", true, "TencentCloud Account ID.");
+        options.addOption(null, "tc-role-name", true, "TencentCloud Role Name.");
+        options.addOption("z", "duration", true, "Desired TencentCloud Credential Duration");
         options.addOption(null, "onelogin-client-id", true, "A valid OneLogin API client_id");
         options.addOption(null, "onelogin-client-secret", true, "A valid OneLogin API client_secret");
         options.addOption(null, "onelogin-region", true, "Onelogin region. us or eu  (Default value: us)");
@@ -241,7 +231,7 @@ public class OneloginTCCLI {
 
     public static void main(String[] commandLineArguments) throws Exception {
 
-        System.out.println("\nOneLogin TC Assume Role Tool\n");
+        System.out.println("\nOneLogin TencentCloud Assume Role Tool\n");
 
         if (!commandParser(commandLineArguments)) {
             return;
@@ -293,7 +283,7 @@ public class OneloginTCCLI {
                             oneloginPassword = scanner.next();
                         }
                     }
-                    System.out.print("TC App ID: ");
+                    System.out.print("TencentCloud App ID: ");
                     if (appId == null) {
                         appId = scanner.next();
                     } else {
@@ -335,11 +325,11 @@ public class OneloginTCCLI {
                             String[] roles = rolesString.split(";");
                             for (int k = 0; k < roles.length; k++) {
                                 String role = roles[k];
-                                if(tcAccountId != null && !role.split(":")[4].equals("uin/"+tcAccountId))
+                                if (tcAccountId != null && !role.split(":")[4].equals("uin/" + tcAccountId))
                                     continue;
-                                if(!role.split(":")[5].startsWith("roleName"))
+                                if (!role.split(":")[5].startsWith("roleName"))
                                     continue;
-                                roleData.add(roles[k]+","+principle);
+                                roleData.add(roles[k] + "," + principle);
                             }
                         }
 
@@ -441,7 +431,7 @@ public class OneloginTCCLI {
 
                 Credentials stsCredentials = assumeRoleWithSAMLResult.getCredentials();
 
-                if (profileName == null && file == null) {
+                if (profileName == null) {
                     String action = "export";
                     if (System.getProperty("os.name").toLowerCase().contains("win")) {
                         action = "set";
@@ -449,7 +439,7 @@ public class OneloginTCCLI {
                     System.out.println("\n-----------------------------------------------------------------------\n");
                     System.out.println("Success!\n");
                     System.out.println("Assumed Role User: " + roleArn + "\n");
-                    System.out.println("Temporary TC Credentials Granted via OneLogin\n ");
+                    System.out.println("Temporary TencentCloud Credentials Granted via OneLogin\n ");
                     System.out.println("It will expire at " + assumeRoleWithSAMLResult.getExpiration());
                     System.out.println("Copy/Paste to set these as environment variables\n");
                     System.out.println("-----------------------------------------------------------------------\n");
@@ -461,37 +451,46 @@ public class OneloginTCCLI {
                     System.out.println(action + " TENCENTCLOUD_SECRET_KEY=" + stsCredentials.getTmpSecretKey());
                     System.out.println();
                 } else {
-                    if (profileName == null) {
-                        profileName = "default";
-                    }
-                    if (file == null) {
-                        String defaultFileLocation = System.getProperty("user.home") + "/.tccli/"+profileName+".credential";
-                        file = new File(defaultFileLocation);
-                    }
+                    String homeDir = System.getProperty("user.home") + "/.tccli";
+                    Files.createDirectories(Paths.get(homeDir));
 
-                    JsonObject configObject = new JsonObject();
-                    try{
-                        try (FileReader reader = new FileReader(file)) {
-                            configObject = JsonParser.parseReader(reader).getAsJsonObject();
+                    String cfgPath = homeDir + "/" + profileName + ".configure";
+                    if (!Files.exists(Paths.get(cfgPath))) {
+                        File cfgFile = new File(cfgPath);
+                        cfgFile.createNewFile();
+                        try (FileWriter writer = new FileWriter(cfgFile)) {
+                            String defaultConfigure = "{\"_sys_param\": {\n" +
+                                    "    \"arrayCount\": 10,\n" +
+                                    "    \"output\": \"json\",\n" +
+                                    "    \"region\": \"ap-guangzhou\",\n" +
+                                    "    \"warning\": \"off\"\n" +
+                                    "  }\n}";
+                            writer.write(defaultConfigure);
                         }
-                    } catch (FileNotFoundException ignored){
-                        file.createNewFile();
-                    } catch (JsonSyntaxException ignored){
                     }
 
+                    String credPath = homeDir + "/" + profileName + ".credential";
+                    if (!Files.exists(Paths.get(credPath))) {
+                        File credFile = new File(credPath);
+                        credFile.createNewFile();
+                    }
+
+                    File credFile = new File(credPath);
+                    JsonObject configObject = new JsonObject();
                     configObject.addProperty("secretId", stsCredentials.getTmpSecretId());
                     configObject.addProperty("secretKey", stsCredentials.getTmpSecretKey());
                     configObject.addProperty("token", stsCredentials.getToken());
 
-                    String configContent = new Gson().toJson(configObject);
-                    try (FileWriter writer = new FileWriter(file)) {
-                        writer.write(configContent);
+
+                    String credContent = new GsonBuilder().setPrettyPrinting().create().toJson(configObject);
+                    try (FileWriter writer = new FileWriter(credFile)) {
+                        writer.write(credContent);
                     }
 
                     System.out.println("\n-----------------------------------------------------------------------");
                     System.out.println("Success!\n");
                     System.out.println("Temporary TencentCloud Credentials Granted via OneLogin\n");
-                    System.out.println("Updated TencentCloud profile '" + profileName + "' located at " + file.getAbsolutePath());
+                    System.out.println("Updated TencentCloud profile '" + profileName + "' located at " + credFile.getAbsolutePath());
                     if (loop > (i + 1)) {
                         System.out.println("This process will regenerate credentials " + (loop - (i + 1)) + " more times.\n");
                         System.out.println("Press Ctrl + C to exit");
