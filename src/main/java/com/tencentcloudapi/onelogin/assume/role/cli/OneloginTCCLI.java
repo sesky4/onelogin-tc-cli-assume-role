@@ -1,4 +1,4 @@
-package com.onelogin.tc.assume.role.cli;
+package com.tencentcloudapi.onelogin.assume.role.cli;
 
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
@@ -192,11 +192,13 @@ public class OneloginTCCLI {
 
             if (((tcAccountId != null && !tcAccountId.isEmpty()) && (tcRoleName == null || tcRoleName.isEmpty())) || ((tcRoleName != null && !tcRoleName.isEmpty()) && (tcAccountId == null || tcAccountId.isEmpty()))) {
                 System.err.println("--tc-account-id and --tc-role-name need to be set together");
+                new HelpFormatter().printHelp("utility-name", options);
                 return false;
             }
 
             if (((oneloginClientID != null && !oneloginClientID.isEmpty()) && (oneloginClientSecret == null || oneloginClientSecret.isEmpty())) || ((oneloginClientSecret != null && !oneloginClientSecret.isEmpty()) && (oneloginClientID == null || oneloginClientID.isEmpty()))) {
                 System.err.println("--onelogin-client-id and --onelogin-client-secret need to be set together");
+                new HelpFormatter().printHelp("utility-name", options);
                 return false;
             }
             return true;
