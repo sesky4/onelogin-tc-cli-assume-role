@@ -1,4 +1,4 @@
-onelogin-tc-assume-role
+tencentcloud-onelogin-assume-role-cli
 ========================
 
 forked from [onelogin-aws-cli-assume-role

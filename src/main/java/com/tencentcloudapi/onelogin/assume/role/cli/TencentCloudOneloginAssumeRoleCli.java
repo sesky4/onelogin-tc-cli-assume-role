@@ -23,7 +23,7 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
-public class OneloginTCCLI {
+public class TencentCloudOneloginAssumeRoleCli {
 
     private static int time = 45;
     private static int loop = 1;
